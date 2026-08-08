@@ -1,0 +1,108 @@
+plugins {
+	id 'java-library'
+	id 'idea'
+	id 'maven-publish'
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+version = "${project.minecraft_version}-${project.mod_version}"
+group = mod_group_id
+
+base {
+	archivesName = mod_id
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+repositories {
+	flatDir {
+		dirs 'libs'
+	}
+	mavenCentral()
+	maven { url = 'https://maven.fabricmc.net/' }
+}
+
+loom {
+	mods {
+		"enchantlib" {
+			sourceSet sourceSets.main
+		}
+	}
+
+	runs {
+		configureEach {
+			vmArg "-Dfabric.skipMcVersionCheck=true"
+		}
+
+		server {
+			server()
+			setConfigName "EnchantLib Server"
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	// Fabric Loader 作为启动器，仍用 implementation
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	// Fabric API 通过本地 jar 引入（libs/fabric-api-26.2.jar）
+	implementation ":fabric-api-26.2:"
+	// Fabric Loot API v3 子模块（P3-1 战利品注入需要）
+	implementation ":fabric-loot-api-v3-3.0.17:"
+	// Fabric API Base（包含 Event 类，fabric-loot-api-v3 依赖）
+	implementation ":fabric-api-base-2.0.4:"
+	// Fabric Lifecycle Events v1（P4-1 事件分发器需要 ServerLifecycleEvents.SERVER_STARTED）
+	implementation ":fabric-lifecycle-events-v1-4.1.3:"
+	// Fabric Entity Events v1（P4-1 需要 ServerPlayerEvents.AFTER_JOIN）
+	implementation ":fabric-entity-events-v1-5.0.5:"
+	// Fabric Command API v2（P6-1 指令系统需要 CommandRegistrationCallback）
+	implementation ":fabric-command-api-v2-3.1.0:"
+	// Fabric Permission API v1（P6-2 权限抽象需要 PermissionPredicates / PermissionNode）
+	implementation ":fabric-permission-api-v1-1.0.3:"
+	// Fabric Events Interaction v0（钩子补全需要 PlayerBlockBreakEvents / UseItemCallback / UseBlockCallback / UseEntityCallback）
+	implementation ":fabric-events-interaction-v0-5.2.6:"
+
+	// TOML 配置解析（P1-4 配置系统）
+	include 'com.electronwill.night-config:toml:3.8.1'
+	implementation 'com.electronwill.night-config:toml:3.8.1'
+
+	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.13.4'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.13.4'
+}
+
+processResources {
+	def replaceProperties = [
+			minecraft_version   : minecraft_version,
+			loader_version      : loader_version,
+			mod_id              : mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+			mod_authors         : mod_authors, mod_description: mod_description,
+	]
+	inputs.properties replaceProperties
+	filesMatching("fabric.mod.json") {
+		expand replaceProperties
+	}
+}
+
+test {
+	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+	options.release = 25
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${mod_id}" }
+	}
+}
