@@ -72,10 +72,11 @@ resource_distribution_enabled = true
 # HTTP 服务器端口(范围 1-65535)
 http_server_port = 8765
 
-# HTTP 服务器对外主机地址
+# HTTP 服务器对外完整网址(可含端口)
 # 留空则自动探测本机 IP(仅局域网可用,公网玩家无法访问)
-# 公网部署必须配置为对外域名或公网 IP
-# 示例:http_server_host = "play.example.com" 或 "203.0.113.5"
+# 公网部署必须配置为对外域名或公网 IP;走 80/反代不带端口,直连非 80 端口写成 "play.example.com:8080"
+# 注意:http_server_port 只是本地监听端口(服务端绑定用),不进对外 URL;对外端口由此处 host 决定
+# 示例:http_server_host = "play.example.com" 或 "203.0.113.5" 或 "play.example.com:8080"
 http_server_host = ""
 
 # 调试日志开关
@@ -98,7 +99,7 @@ entity_tick_interval = 20
 | `villager_trade_enabled` | bool | `true` | 村民交易总开关,关闭后所有村民交易不注入 |
 | `resource_distribution_enabled` | bool | `true` | 资源分发总开关,关闭后跳过扫描/合并/构建/HTTP/推送 |
 | `http_server_port` | int | `8765` | HTTP 服务器端口,范围 1-65535 |
-| `http_server_host` | string | `""` | 对外主机地址,留空自动探测本机 IP(仅局域网可用,公网必须配置域名或 IP) |
+| `http_server_host` | string | `""` | 对外完整网址,可含端口;留空自动探测本机 IP(仅局域网可用,公网必须配置)。对外端口由此处 host 决定,不进 http_server_port |
 | `debug_enabled` | bool | `false` | 调试日志开关 |
 | `entity_tick_interval` | int | `20` | ENTITY_TICK 触发间隔(>=1)。1=每 tick(高精度高 CPU),20=每秒(推荐)。使用实体 ID 相位偏移避免全服集中触发 |
 
@@ -181,9 +182,9 @@ threshold = 0.7
 **输出示例**:
 ```
 [EnchantLib] 共 3 个自定义附魔:
-- mymod:demo (lv3, w5) MyMod Demo Enchantment | 互斥: #minecraft:exclusive_set/damage
-- mymod:fire_aspect (lv2, w5) MyMod Fire Aspect
-- mymod:ice_aspect (lv2, w5) MyMod Ice Aspect
+- enchantlib-testmod:demo (lv3, w5) Testmod Demo Enchantment | 互斥: #minecraft:exclusive_set/damage
+- enchantlib-testmod:fire_aspect (lv2, w5) Testmod Fire Aspect
+- enchantlib-testmod:ice_aspect (lv2, w5) Testmod Ice Aspect
 ```
 
 **权限**:`enchantlib.command.list`(默认所有玩家可用)
@@ -195,7 +196,7 @@ threshold = 0.7
 **输出示例**:
 ```
 [EnchantLib] 共 1 个自定义互斥组:
-- #mymod:exclusive_set/elemental (2 个) mymod:fire_aspect, mymod:ice_aspect
+- #enchantlib-testmod:exclusive_set/elemental (2 个) enchantlib-testmod:fire_aspect, enchantlib-testmod:ice_aspect
 ```
 
 **权限**:`enchantlib.command.groups`(默认所有玩家可用)
@@ -218,10 +219,10 @@ threshold = 0.7
 **示例**:
 ```bash
 # 给予最近的玩家 3 级附魔(空手时给附魔书)
-/enchantlib give @p mymod:demo 3
+/enchantlib give @p enchantlib-testmod:demo 3
 
 # 给予 Steve 2 级附魔(空手时给附魔书)
-/enchantlib give Steve mymod:fire_aspect 2
+/enchantlib give Steve enchantlib-testmod:fire_aspect 2
 
 # 手持武器时,直接对该武器附魔
 /enchantlib give @p mymod:leech 4
@@ -239,8 +240,8 @@ threshold = 0.7
 
 **示例**:
 ```bash
-/enchantlib dump mymod:demo
-/enchantlib dump mymod:demo my_demo
+/enchantlib dump enchantlib-testmod:demo
+/enchantlib dump enchantlib-testmod:demo my_demo
 ```
 
 **限制**:仅支持 EnchantLib 注册的附魔,不支持原版附魔。
@@ -304,9 +305,9 @@ threshold = 0.7
 
 **输出示例**:
 ```
-[EnchantLib] 附魔详情: mymod:demo
-- 描述键: enchantment.mymod.demo
-- 描述回退: MyMod Demo Enchantment
+[EnchantLib] 附魔详情: enchantlib-testmod:demo
+- 描述键: enchantment.enchantlib-testmod.demo
+- 描述回退: Testmod Demo Enchantment
 - 最大等级: 3
 - 权重: 5
 - 铁砧成本: 2
@@ -452,18 +453,24 @@ EnchantLib 自带客户端资源包分发系统,用于推送附魔的本地化�
 
 ### 6.3 关键配置 http_server_host(公网部署必读)
 
-HTTP 服务器监听 `0.0.0.0:port`(所有网卡),但**推送给客户端的下载 URL 主机地址**由 `http_server_host` 决定:
+HTTP 服务器监听 `0.0.0.0:http_server_port`(所有网卡的**本地端口**),但**推送给客户端的下载 URL**由 `http_server_host` 决定。两者分离:
 
-- **留空**(`""`):自动探测本机 IP(仅局域网可用,公网玩家无法访问)
-- **配置域名**:`http_server_host = "play.example.com"`(推荐)
-- **配置公网 IP**:`http_server_host = "203.0.113.5"`
+- `http_server_port`(默认 8765)= **本地监听端口**,仅服务端绑定用,**不进对外 URL**
+- `http_server_host` = **对外完整网址**,可含端口;对外端口由此处 host 决定
 
-| 场景 | 配置 | 说明 |
-|------|------|------|
-| 局域网联机 | `""` | 留空,自动探测 |
-| 公网(域名) | `"play.example.com"` | 推荐 |
-| 公网(IP) | `"203.0.113.5"` | 直接使用 |
-| 反向代理 | `"cdn.example.com"` | 配合反代 |
+构造规则:
+- **留空**(`""`):自动探测本机 IP,URL 拼本地端口(仅局域网可用,公网玩家无法访问)
+- **走 80/反代**:`http_server_host = "play.example.com"`(不带端口,URL 为 `http://play.example.com/enchantlib-resourcepack.zip`)
+- **直连非 80 端口**:`http_server_host = "play.example.com:8080"`(端口写在 host 里)
+- **配置公网 IP**:`http_server_host = "203.0.113.5"` 或 `http_server_host = "203.0.113.5:8080"`
+
+| 场景 | http_server_host | http_server_port | 对外 URL |
+|------|------|------|------|
+| 局域网联机 | `""` | 8765 | `http://<本机IP>:8765/...`(自动探测) |
+| 公网域名(80/反代) | `"play.example.com"` | 8765(本地) | `http://play.example.com/...` |
+| 公网域名(直连非80) | `"play.example.com:8080"` | 8765(本地) | `http://play.example.com:8080/...` |
+| 公网 IP | `"203.0.113.5"` | 8765(本地) | `http://203.0.113.5/...` |
+| 反向代理(CDN) | `"cdn.example.com"` | 8765(本地) | `http://cdn.example.com/...` |
 
 **注意**:修改 `http_server_host` 后需**重启服务端**(`reload` 不重启 HTTP 服务器)。
 
@@ -523,10 +530,10 @@ HTTP 服务器监听 `0.0.0.0:port`(所有网卡),但**推送给客户端的下�
 
 #### 7.3.3 玩家无法下载资源包(公网)
 
-1. 检查 `http_server_host` 是否配置为对外域名或公网 IP
-2. 检查 `http_server_port` 是否在防火墙开放
-3. 查看启动日志的资源包下载 URL
-4. 反代场景确认代理正确转发
+1. 检查 `http_server_host` 是否配置为对外完整网址(域名或公网 IP,可含端口)
+2. 检查 `http_server_port`(本地监听端口)是否在防火墙开放(反代场景需开放反代监听端口,内部端口可不对公网暴露)
+3. 查看启动日志的资源包下载 URL(配置了 host 时 URL 不应含本地端口)
+4. 反代场景确认代理正确转发,且 `http_server_host` 设为反代对外域名(不带端口)
 5. 修改 `http_server_host` 后需重启服务端
 
 #### 7.3.4 战利品未注入
@@ -614,7 +621,7 @@ mode = "IGNORE"
 ```
 [Server thread/WARN] (Minecraft) [net.minecraft.world.level.chunk.storage.EntityStorage] Serialization errors:
 chunk@[-5, 8]:
-  .Entities[1]: Failed to decode value '{components:{"minecraft:stored_enchantments":{"mymod:demo":1}},count:1,id:"minecraft:enchanted_book"}' from field 'Item': Failed to get element mymod:demo missed input
+  .Entities[1]: Failed to decode value '{components:{"minecraft:stored_enchantments":{"enchantlib-testmod:demo":1}},count:1,id:"minecraft:enchanted_book"}' from field 'Item': Failed to get element enchantlib-testmod:demo missed input
 ```
 
 ### 8.4 恢复行为
@@ -681,11 +688,11 @@ Minecraft 26.2 使用组件系统(Data Components)存储物品附魔。附魔 ID
 
 ### Q: 公网玩家无法下载资源包怎么办?
 
-**A**: 这是 `http_server_host` 未配置导致的。默认留空时自动探测本机 IP(如 `192.168.x.x`),公网玩家无法访问。在 `acquisition.toml` 中设置 `http_server_host` 为服务器的对外域名或公网 IP,然后重启服务端。
+**A**: 这是 `http_server_host` 未配置导致的。默认留空时自动探测本机 IP(如 `192.168.x.x`),URL 会拼本地端口,公网玩家无法访问。在 `acquisition.toml` 中设置 `http_server_host` 为服务器的对外完整网址(域名或公网 IP,可含端口),然后重启服务端。注意:`http_server_port` 只是本地监听端口,不进对外 URL;对外端口由 `http_server_host` 决定。
 
 ### Q: 如何在反向代理(如 Nginx)后使用?
 
-**A**: 将 `http_server_host` 设为反代对外的域名,`http_server_port` 保持 EnchantLib 监听的内部端口。在 Nginx 中配置对应 location 转发到该内部端口。修改后需重启服务端。
+**A**: 将 `http_server_host` 设为反代对外的域名(**不带端口**,走 80/反代),`http_server_port` 保持 EnchantLib 监听的内部端口(如 8765)。在 Nginx 中配置对应 location 把 80 端口转发到该内部端口。这样对外 URL 为 `http://<域名>/enchantlib-resourcepack.zip`(不含本地端口)。修改后需重启服务端。若反代对外端口非 80(如 8080),把端口写进 host:`http_server_host = "play.example.com:8080"`。
 
 ### Q: `entity_tick_interval` 应该设多少?
 

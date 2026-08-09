@@ -68,8 +68,9 @@ dependencies {
 	// Fabric Events Interaction v0（钩子补全需要 PlayerBlockBreakEvents / UseItemCallback / UseBlockCallback / UseEntityCallback）
 	implementation ":fabric-events-interaction-v0-5.2.6:"
 
-	// TOML 配置解析（P1-4 配置系统）
+	// TOML 配置解析（P1-4 配置系统）—— toml 依赖 core，include 不传递，需显式嵌入 core
 	include 'com.electronwill.night-config:toml:3.8.1'
+	include 'com.electronwill.night-config:core:3.8.1'
 	implementation 'com.electronwill.night-config:toml:3.8.1'
 
 	testImplementation 'org.junit.jupiter:junit-jupiter-api:5.13.4'

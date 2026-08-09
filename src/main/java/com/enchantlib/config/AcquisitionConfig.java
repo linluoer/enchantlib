@@ -33,9 +33,9 @@ import java.nio.file.Path;
  * # HTTP 服务器端口（仅 resource_distribution_enabled=true 时生效）
  * http_server_port = 8765
  *
- * # HTTP 服务器对外主机地址（域名或公网 IP）
+ * # HTTP 服务器对外完整网址（域名或公网 IP，可含端口；走 80/反代则不带端口。端口写在这里，不写 http_server_port）
  * # 留空则自动探测本机 IP（仅局域网可用，公网玩家无法访问）
- * # 示例：http_server_host = "play.example.com" 或 "203.0.113.5"
+ * # 示例：http_server_host = "play.example.com" 或 "203.0.113.5" 或 "play.example.com:8080"
  * http_server_host = ""
  *
  * # 调试模式开关

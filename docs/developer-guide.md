@@ -1323,8 +1323,8 @@ threshold = 0.7
 loot_injection_enabled = true        # 战利品注入总开关
 villager_trade_enabled = true        # 村民交易总开关
 resource_distribution_enabled = true # 资源分发总开关
-http_server_port = 8765              # HTTP 服务器端口
-http_server_host = ""                # 对外主机地址(留空自动探测)
+http_server_port = 8765              # 本地监听端口(服务端绑定用,不进对外 URL)
+http_server_host = ""                # 对外完整网址(可含端口;留空自动探测,仅局域网可用)
 debug_enabled = false                # 调试开关
 entity_tick_interval = 20            # ENTITY_TICK 触发间隔(默认 20 tick = 1 秒)
 ```
@@ -1395,13 +1395,19 @@ EnchantLib 在服务端启动时:
 
 ### 15.3 对外 URL 配置(公网部署关键)
 
-HTTP 服务器监听 `0.0.0.0:port`(所有网卡),但推送给客户端的下载 URL 中的主机地址由 `http_server_host` 决定:
+HTTP 服务器监听 `0.0.0.0:http_server_port`(所有网卡的**本地端口**),但**推送给客户端的下载 URL**由 `http_server_host` 决定。两者分离:
 
-- **留空**:自动探测本机 IP(仅局域网可用,公网玩家无法访问)
-- **配置域名**:`http_server_host = "play.example.com"`(推荐)
-- **配置公网 IP**:`http_server_host = "203.0.113.5"`
+- `http_server_port`(默认 8765)= **本地监听端口**,仅服务端绑定用,**不进对外 URL**
+- `http_server_host` = **对外完整网址**,可含端口;对外端口由此处 host 决定
 
-> 公网部署时**必须**配置此项,否则客户端收到的下载 URL 指向局域网地址,无法下载资源包。
+常见配置方式:
+
+- **走 80/反代**:`http_server_host = "play.example.com"`(不带端口,URL 为 `http://play.example.com/enchantlib-resourcepack.zip`)
+- **直连非 80 端口**:`http_server_host = "play.example.com:8080"`(端口写在 host 里)
+- **配置公网 IP**:`http_server_host = "203.0.113.5"` 或 `"203.0.113.5:8080"`
+- **留空**:自动探测本机 IP,URL 拼本地端口(仅局域网可用)
+
+> 公网部署时**必须**配置 `http_server_host`,否则客户端收到的下载 URL 指向局域网地址,无法下载资源包。修改后需**重启服务端**(`reload` 不重启 HTTP 服务器)。
 
 ---
 

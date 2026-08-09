@@ -53,6 +53,9 @@ public final class ResourcePackHttpServer {
 	/** 服务器主机地址（用于构建下载 URL） */
 	private static String hostAddress = "localhost";
 
+	/** hostAddress 是否为用户配置的完整对外地址（true=不拼端口，host 自带；false=自动探测，需拼本地端口） */
+	private static boolean hostConfigured = false;
+
 	private ResourcePackHttpServer() {
 	}
 
@@ -70,18 +73,20 @@ public final class ResourcePackHttpServer {
 	 * 启动 HTTP 服务器。
 	 *
 	 * @param port 监听端口（若 0 使用默认端口 8765）
-	 * @param configuredHost 对外主机地址（域名或公网 IP），空字符串则自动探测本机 IP
+	 * @param configuredHost 对外完整网址（域名或公网 IP，可含端口如 "play.example.com:8080"；走 80/反代则不带端口），空字符串则自动探测本机 IP
 	 * @return 实际监听端口，若启动失败返回 -1
 	 */
 	public static int start(int port, String configuredHost) {
 		int listenPort = port > 0 ? port : DEFAULT_PORT;
 
 		if (configuredHost != null && !configuredHost.isEmpty()) {
-			// 管理员配置了对外主机地址（域名或公网 IP）
+			// 管理员配置了对外完整网址（可含端口；走 80/反代则不带端口）
 			hostAddress = configuredHost;
+			hostConfigured = true;
 			EnchantLib.LOGGER.info("[EnchantLib] 使用配置的对外主机地址: {}", hostAddress);
 		} else {
-			// 自动探测本机 IP
+			// 自动探测本机 IP（局域网场景，URL 需拼本地端口）
+			hostConfigured = false;
 			try {
 				hostAddress = resolveHostAddress();
 			} catch (UnknownHostException e) {
@@ -100,10 +105,17 @@ public final class ResourcePackHttpServer {
 			server.start();
 			actualPort = listenPort;
 
-			EnchantLib.LOGGER.info("[EnchantLib] HTTP 服务器已启动: http://{}:{}/",
-				hostAddress, actualPort);
-			EnchantLib.LOGGER.info("[EnchantLib] 资源包下载 URL: http://{}:{}{}",
-				hostAddress, actualPort, RESOURCE_PACK_PATH);
+			if (hostConfigured) {
+				// 用户配置了完整对外地址，URL 不拼本地端口（端口由用户在 host 里自带或走反代）
+				EnchantLib.LOGGER.info("[EnchantLib] HTTP 服务器已启动（本地监听 :{}，对外 URL: http://{}{}）",
+					actualPort, hostAddress, RESOURCE_PACK_PATH);
+			} else {
+				// 自动探测场景，URL 拼本地端口供局域网访问
+				EnchantLib.LOGGER.info("[EnchantLib] HTTP 服务器已启动: http://{}:{}/",
+					hostAddress, actualPort);
+				EnchantLib.LOGGER.info("[EnchantLib] 资源包下载 URL: http://{}:{}{}",
+					hostAddress, actualPort, RESOURCE_PACK_PATH);
+			}
 
 			return actualPort;
 		} catch (IOException e) {
@@ -134,7 +146,13 @@ public final class ResourcePackHttpServer {
 		if (server == null) {
 			return null;
 		}
-		return "http://" + hostAddress + ":" + actualPort + RESOURCE_PACK_PATH;
+		if (hostConfigured) {
+			// 用户配置了完整对外地址，不拼本地端口（端口由用户在 host 里自带，或走 80/反代）
+			return "http://" + hostAddress + RESOURCE_PACK_PATH;
+		} else {
+			// 自动探测场景，拼本地端口供局域网访问
+			return "http://" + hostAddress + ":" + actualPort + RESOURCE_PACK_PATH;
+		}
 	}
 
 	/**

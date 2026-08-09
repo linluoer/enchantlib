@@ -121,7 +121,7 @@ loot_injection_enabled = true        # master switch for loot injection
 villager_trade_enabled = true        # master switch for villager trades
 resource_distribution_enabled = true # master switch for client resource distribution
 http_server_port = 8765              # resource pack HTTP server port
-http_server_host = ""                # external host address (mandatory for public deployment; empty means LAN only)
+http_server_host = ""                # external full URL (mandatory for public deployment; may include port; empty means LAN only)
 debug_enabled = false                # debug log switch
 entity_tick_interval = 20            # ENTITY_TICK trigger interval (in ticks)
 ```
@@ -161,11 +161,13 @@ Admins can define enchantments without changing code; see section 13 of the deve
 
 ## Public deployment notes
 
-Resource distribution listens on `0.0.0.0:8765` by default, but the host in the download URL pushed to clients is determined by `http_server_host`. **Public deployment must configure this** as a domain or public IP; otherwise clients receive a download URL pointing to a LAN address and cannot download the resource pack:
+Resource distribution listens on `0.0.0.0:8765` by default, but the host in the download URL pushed to clients is determined by `http_server_host`. **Public deployment must configure this** as an external full URL (domain or public IP, may include port); otherwise clients receive a download URL pointing to a LAN address and cannot download the resource pack:
 
 ```toml
-http_server_host = "play.example.com"   # or public IP
+http_server_host = "play.example.com"   # no port for 80/reverse proxy; use "play.example.com:8080" for direct non-80
 ```
+
+> `http_server_port` (default 8765) is only the **local listen port** (server bind) and **does not appear in the external URL**. The external port is determined by `http_server_host`: omit the port when behind 80/reverse proxy; include it in the host for direct non-80 access (e.g., `play.example.com:8080`).
 
 If you don't need client localization (e.g., a pure survival server that doesn't show enchantment names), set `resource_distribution_enabled = false` to disable the entire resource distribution system.
 
@@ -322,7 +324,7 @@ loot_injection_enabled = true        # 战利品注入总开关
 villager_trade_enabled = true        # 村民交易总开关
 resource_distribution_enabled = true # 客户端资源分发总开关
 http_server_port = 8765              # 资源包 HTTP 服务器端口
-http_server_host = ""                # 对外主机地址(公网部署必填,留空仅局域网可用)
+http_server_host = ""                # 对外完整网址(公网部署必填,可含端口;留空仅局域网可用)
 debug_enabled = false                # 调试日志开关
 entity_tick_interval = 20            # ENTITY_TICK 触发间隔(单位 tick)
 ```
@@ -362,11 +364,13 @@ threshold = 0.7                      # 充能阈值 0.0~1.0
 
 ## 公网部署提示
 
-资源分发默认监听 `0.0.0.0:8765`,但推送给客户端的下载 URL 主机地址由 `http_server_host` 决定。**公网部署必须配置此项**为域名或公网 IP,否则客户端收到的下载 URL 指向局域网地址,无法下载资源包:
+资源分发默认监听 `0.0.0.0:8765`,但推送给客户端的下载 URL 主机地址由 `http_server_host` 决定。**公网部署必须配置此项**为对外完整网址(域名或公网 IP,可含端口),否则客户端收到的下载 URL 指向局域网地址,无法下载资源包:
 
 ```toml
-http_server_host = "play.example.com"   # 或公网 IP
+http_server_host = "play.example.com"   # 走 80/反代不带端口；直连非 80 端口写 "play.example.com:8080"
 ```
+
+> `http_server_port`(默认 8765)只是**本地监听端口**(服务端绑定用),**不进对外 URL**。对外端口由 `http_server_host` 决定:走 80/反代时 host 不带端口;直连非 80 端口时把端口写在 host 里(如 `play.example.com:8080`)。
 
 若不需要客户端本地化(例如纯生存服不显示附魔名),可设 `resource_distribution_enabled = false` 关闭整个资源分发系统。
 
