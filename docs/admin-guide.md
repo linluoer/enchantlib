@@ -31,7 +31,7 @@
 
 ### 1.2 安装步骤
 
-1. 将 `enchantlib-1.0.0.jar` 放入服务端 `mods/` 目录
+1. 将 `enchantlib-1.0.1.jar` 放入服务端 `mods/` 目录
 2. 启动服务端,EnchantLib 会自动创建 `config/enchantlib/` 配置目录
 3. (可选)安装依赖 EnchantLib 的其他模组
 

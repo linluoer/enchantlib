@@ -4,7 +4,7 @@
 
 > A pure-server-side custom enchantment library for Minecraft 26.2 (Fabric). It lets mod developers accomplish enchantment registration, exclusive sets, acquisition paths, event callbacks, and client-side resource distribution through a concise API — without hand-writing datapack, Mixin, or resource pack logic.
 
-- **Version**: `26.2-1.0.0`
+- **Version**: `26.2-1.0.1`
 - **Environment**: Minecraft 26.2 · Fabric Loader ≥ 0.19.3 · Fabric API · Java 25
 - **Side**: Pure server-side (no client install required; resources are pushed automatically by the built-in HTTP server)
 - **License**: MIT
@@ -39,7 +39,7 @@ Under the MC 26.2 native enchantment system, custom enchantments require writing
 
 ### Player (server user)
 
-Place `enchantlib-26.2-1.0.0.jar` in the server's `mods/` directory. No client install is required; when players join, EnchantLib automatically pushes the localization resource pack (if the server has resource distribution enabled).
+Place `enchantlib-26.2-1.0.1.jar` in the server's `mods/` directory. No client install is required; when players join, EnchantLib automatically pushes the localization resource pack (if the server has resource distribution enabled).
 
 Dependencies: Minecraft 26.2, Fabric Loader, Fabric API.
 
@@ -49,7 +49,7 @@ Dependencies: Minecraft 26.2, Fabric Loader, Fabric API.
 
 ```gradle
 dependencies {
-    modImplementation "com.enchantlib:enchantlib:26.2-1.0.0"
+    modImplementation "com.enchantlib:enchantlib:26.2-1.0.1"
 }
 ```
 
@@ -207,7 +207,7 @@ liluo23 · MIT License
 
 > 面向 Minecraft 26.2 (Fabric) 的纯服务端自定义附魔库。让模组开发者用一套简洁 API 完成附魔的注册、互斥组、获取途径、事件回调与客户端资源分发,无需手写数据包、Mixin 或资源包逻辑。
 
-- **版本**:`26.2-1.0.0`
+- **版本**:`26.2-1.0.1`
 - **环境**:Minecraft 26.2 · Fabric Loader ≥ 0.19.3 · Fabric API · Java 25
 - **运行侧**:纯服务端(客户端无需安装,资源由内置 HTTP 服务器自动推送)
 - **许可证**:MIT
@@ -242,7 +242,7 @@ liluo23 · MIT License
 
 ### 玩家(服务端使用者)
 
-把 `enchantlib-26.2-1.0.0.jar` 放入服务端 `mods/` 目录。客户端无需安装,玩家加入时 EnchantLib 会自动推送本地化资源包(如服务器开启了资源分发)。
+把 `enchantlib-26.2-1.0.1.jar` 放入服务端 `mods/` 目录。客户端无需安装,玩家加入时 EnchantLib 会自动推送本地化资源包(如服务器开启了资源分发)。
 
 依赖:Minecraft 26.2、Fabric Loader、Fabric API。
 
@@ -252,7 +252,7 @@ liluo23 · MIT License
 
 ```gradle
 dependencies {
-    modImplementation "com.enchantlib:enchantlib:26.2-1.0.0"
+    modImplementation "com.enchantlib:enchantlib:26.2-1.0.1"
 }
 ```
 

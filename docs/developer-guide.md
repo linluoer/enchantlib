@@ -100,7 +100,7 @@ EnchantmentEntrypoint 接口实现
 
 ```gradle
 dependencies {
-    modImplementation "com.enchantlib:enchantlib:1.0.0"
+    modImplementation "com.enchantlib:enchantlib:1.0.1"
 }
 ```
 
