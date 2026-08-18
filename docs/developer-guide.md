@@ -87,7 +87,7 @@ EnchantmentEntrypoint 接口实现
 - BuiltInEvents 通过 Mixin + Fabric API 桥接原生事件,扫描实体装备附魔,单回调异常不影响其他附魔
 - BuiltInEvents 使用位掩码短路(Mixin 热路径入口检查 `EnchantmentEventDispatcher.hasCallbacks(type)`),未安装实现模组时零开销
 - `EnchantLibEvents.LIVING_ENTITY_TICK` 采用**懒挂载**:仅当实现模组调用 `enableLivingEntityTick()` 时才订阅 `ServerTickEvents.END_SERVER_TICK`,未启用时零开销
-- 资源分发自动扫描 `assets/<modid>/enchant_sync/`,合并语言文件后通过 HTTP 推送
+- 资源分发自动扫描 `assets/` 下任意命名空间的 `enchant_sync/` 目录,合并语言文件后通过 HTTP 推送;客户端安装 EnchantLib 及附属后自动本地注入资源(无需服务器推送)
 - 启动时由 `EnchantmentValidator` 进行全局校验(fail-fast),检测到错误立即崩溃
 
 ---
@@ -100,7 +100,7 @@ EnchantmentEntrypoint 接口实现
 
 ```gradle
 dependencies {
-    modImplementation "com.enchantlib:enchantlib:1.0.1"
+    modImplementation "com.enchantlib:enchantlib:1.1.0"
 }
 ```
 
@@ -1341,7 +1341,7 @@ EnchantLib 是纯服务端模组,但附魔的本地化名称需要客户端资�
 
 ### 15.1 提供客户端资源
 
-在你的模组 `assets/<modid>/enchant_sync/` 目录下放置需要分发的客户端资源:
+在你的模组 `assets/<任意命名空间>/enchant_sync/` 目录下放置需要分发的客户端资源(命名空间不限于模组 ID,`assets/` 下的任意子目录均会被扫描):
 
 ```
 assets/mymod/enchant_sync/
@@ -1385,15 +1385,24 @@ assets/mymod/enchant_sync/
 
 EnchantLib 在服务端启动时:
 
-1. `EnchantSyncScanner` 扫描所有模组的 `assets/<modid>/enchant_sync/` 目录
+1. `EnchantSyncScanner` 扫描所有模组 `assets/` 目录下**任意命名空间**的 `enchant_sync/` 子目录(`assets/<任意命名空间>/enchant_sync/`,不限于模组 ID)
 2. `LanguageMerger` 按语言代码合并所有语言文件
 3. `ClientResourcePackBuilder` 构建运行时资源包(ZIP)
 4. `ResourcePackHttpServer` 启动内置 HTTP 服务器(默认端口 8765)
 5. 玩家加入时通过 `ClientboundResourcePackPushPacket` 自动推送资源包
 
-**全局开关**:`resource_distribution_enabled = false` 可禁用整个资源分发系统。
+**全局开关**:`resource_distribution_enabled = false` 可关闭**服务端推送**(跳过语言合并、资源包构建与 HTTP 推送)。注意:该开关只控制服务端推送,客户端本地注入(见 15.3)不受影响;`enchant_sync` 目录扫描无条件执行(同时作为客户端本地注入的数据源)。
 
-### 15.3 对外 URL 配置(公网部署关键)
+### 15.3 客户端本地资源注入(无需服务器推送)
+
+自 1.1.0 起,玩家在客户端安装 EnchantLib 及附属模组后(单机或连接任意服务器),无需服务器推送即可自动获得附魔翻译等客户端资源:
+
+- **数据源**:复用 `EnchantSyncScanner` 的扫描结果(`assets/<任意命名空间>/enchant_sync/`)
+- **路径映射**:`RuntimeClientPackContent` 把 `enchant_sync/` 约定路径映射为标准客户端资源路径,如 `<ns>:enchant_sync/lang/en_us.json` → `<ns>:lang/en_us.json`(保留命名空间)
+- **注入方式**:`MinecraftMixin`(client-only,位于 mixins.json 的 `"client"` 段)在 `Minecraft` 构造器创建 `PackRepository` 时追加 `RepositorySource`,提供 **required=true** 的内存资源包 `enchantlib:client_sync`(始终自动启用,无需玩家操作;`Position.BOTTOM` 保证最低优先级,玩家手动启用的外部资源包仍可覆盖其内容)
+- **开关关系**:`resource_distribution_enabled` 只控制服务端推送(语言合并 + zip 构建 + HTTP);客户端本地注入不受该开关影响
+
+### 15.4 对外 URL 配置(公网部署关键)
 
 HTTP 服务器监听 `0.0.0.0:http_server_port`(所有网卡的**本地端口**),但**推送给客户端的下载 URL**由 `http_server_host` 决定。两者分离:
 
@@ -1551,7 +1560,7 @@ com.enchantlib.resources      # 资源分发(扫描/合并/HTTP 推送)
 com.enchantlib.datapack       # 运行时数据包注入
 com.enchantlib.validation     # 校验管线(fail-fast)
 com.enchantlib.loot           # 战利品注入处理
-com.enchantlib.mixin          # Mixin 注入(10 个 Mixin)
+com.enchantlib.mixin          # Mixin 注入(11 个 Mixin,含 1 个 client-only)
 com.enchantlib.util           # 工具类(SmeltingLookup)
 ```
 
@@ -1569,5 +1578,6 @@ com.enchantlib.util           # 工具类(SmeltingLookup)
 | `BuiltInPackSourceMixin` | 运行时数据包注入 | - |
 | `FoodDataMixin` | `FoodData.tick` HEAD/RETURN | EnchantLibEvents.FOOD_REGEN(设置 FoodTickTracker 标志) |
 | `LivingEntityHealMixin` | `LivingEntity.heal` HEAD | EnchantLibEvents.FOOD_REGEN(检查标志并触发事件) |
+| `MinecraftMixin`(client-only) | `Minecraft.<init>` 创建 `PackRepository` 时追加 RepositorySource | 客户端本地资源包注入(`enchantlib:client_sync`,见 15.3) |
 
 > 完整 Javadoc 见源码 `src/main/java/com/enchantlib/` 目录下各类。

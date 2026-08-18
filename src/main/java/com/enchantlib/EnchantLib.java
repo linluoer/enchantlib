@@ -239,14 +239,15 @@ public class EnchantLib implements ModInitializer {
 		// 扩展钩子：注册 Fabric API 事件监听器，将原生事件桥接到 EnchantLib 事件系统
 		registerExtensionHooks();
 
-		// 资源分发系统（受全局开关控制）
-		if (acquisitionConfig.isResourceDistributionEnabled()) {
-			// 扫描所有模组的 assets/<modid>/enchant_sync/ 目录，收集客户端资源
-			int scannedCount = EnchantSyncScanner.scan();
-			int langCount = EnchantSyncScanner.getLangFiles().size();
-			LOGGER.info("[EnchantLib] 资源扫描完成: 共 {} 个资源文件，其中 {} 个语言文件",
-				scannedCount, langCount);
+		// 扫描所有模组 assets 目录下任意命名空间的 enchant_sync/ 目录，收集客户端资源
+		// 无条件执行：既服务服务端资源分发，也作为客户端本地资源包注入（RuntimeClientPackContent）的数据源
+		int scannedCount = EnchantSyncScanner.scan();
+		int langCount = EnchantSyncScanner.getLangFiles().size();
+		LOGGER.info("[EnchantLib] 资源扫描完成: 共 {} 个资源文件，其中 {} 个语言文件",
+			scannedCount, langCount);
 
+		// 服务端资源分发系统（受全局开关控制；客户端本地注入不受此开关影响）
+		if (acquisitionConfig.isResourceDistributionEnabled()) {
 			// 合并所有模组的语言文件，按语言代码生成统一翻译表
 			int langCodeCount = LanguageMerger.merge();
 			LOGGER.info("[EnchantLib] 语言合并完成: {} 种语言", langCodeCount);
@@ -262,7 +263,8 @@ public class EnchantLib implements ModInitializer {
 					builtCount, ClientResourcePackBuilder.getSize(), ClientResourcePackBuilder.getSha1());
 			}
 		} else {
-			LOGGER.info("[EnchantLib] 资源分发已关闭（acquisition.toml: resource_distribution_enabled=false）");
+			LOGGER.info("[EnchantLib] 服务端资源分发已关闭（acquisition.toml: resource_distribution_enabled=false），"
+				+ "客户端本地注入不受影响");
 		}
 
 		// 收集 entrypoint 注册的事件回调

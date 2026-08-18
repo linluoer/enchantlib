@@ -1,7 +1,7 @@
 # EnchantLib 玩家指南
 
 > 面向玩家,介绍 EnchantLib 服务器上的自定义附魔体验。
-> 适用版本:Minecraft 26.2(Fabric 服务端)。
+> 适用版本:Minecraft 26.2(Fabric 服务端)/ EnchantLib 1.1.0。
 
 ## 目录
 

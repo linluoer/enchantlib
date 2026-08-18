@@ -2,7 +2,6 @@ package com.enchantlib.datapack;
 
 import com.enchantlib.EnchantLib;
 import com.enchantlib.api.EnchantmentBuilder;
-import com.enchantlib.api.EnchantmentEffectsBuilder;
 import com.enchantlib.api.ExclusiveGroupBuilder;
 import com.enchantlib.api.TradeableEnchantmentsBuilder;
 import com.enchantlib.api.VillagerTradeInjection;
@@ -79,15 +78,12 @@ public class RuntimeDatapackContent {
 	}
 
 	/**
-	 * 构建内存数据包，包含内置测试附魔和 entrypoint 注册的自定义附魔。
+	 * 构建内存数据包，包含 entrypoint 注册的自定义附魔、互斥组与村民交易注入。
 	 *
 	 * @return Pack 实例，若元数据读取失败则返回 null
 	 */
 	public static Pack createPack() {
 		RuntimeDatapackBuilder builder = RuntimeDatapackBuilder.create(PACK_ID, PACK_NAME);
-
-		// 内置测试附魔（验证用，后续可移除）
-		addBuiltinTestEnchantments(builder);
 
 		// 添加 entrypoint 收集的自定义附魔
 		for (EnchantmentBuilder enchantBuilder : customEnchantments) {
@@ -146,40 +142,5 @@ public class RuntimeDatapackContent {
 		root.add("values", values);
 		return new com.google.gson.GsonBuilder().setPrettyPrinting().create()
 			.toJson(root).getBytes(java.nio.charset.StandardCharsets.UTF_8);
-	}
-
-	/**
-	 * 添加内置测试附魔（验证用）。
-	 */
-	private static void addBuiltinTestEnchantments(RuntimeDatapackBuilder builder) {
-		builder.addEnchantment(EnchantmentBuilder.create("enchantlib:test")
-			.description("Test Enchantment")
-			.supportedItems("#minecraft:enchantable/sharp_weapon")
-			.weight(10)
-			.maxLevel(3)
-			.minCost(1, 10)
-			.maxCost(6, 15)
-			.anvilCost(4)
-			.slots("mainhand"));
-
-		builder.addEnchantment(EnchantmentBuilder.create("enchantlib:test_damage")
-			.description("Test Damage Enchantment")
-			.supportedItems("#minecraft:enchantable/sharp_weapon")
-			.primaryItems("#minecraft:enchantable/melee_weapon")
-			.weight(5)
-			.maxLevel(5)
-			.minCost(1, 11)
-			.maxCost(21, 11)
-			.anvilCost(1)
-			.slots("mainhand")
-			.exclusiveSet("#minecraft:exclusive_set/damage")
-			.effects(EnchantmentEffectsBuilder.create()
-				.addDamage(1.0, 0.5)));
-	}
-
-	/** 工具方法：构造附魔资源 ID（供外部模块调试用） */
-	@SuppressWarnings("unused")
-	private static Identifier enchantmentResourceId(Identifier id) {
-		return Identifier.fromNamespaceAndPath(id.getNamespace(), "enchantment/" + id.getPath() + ".json");
 	}
 }
