@@ -30,7 +30,7 @@
 
 ### 1.2 安装步骤
 
-1. 将 `enchantlib-1.0.1.jar` 放入服务端 `mods/` 目录
+1. 将 `enchantlib-1.1.0.jar` 放入服务端 `mods/` 目录
 2. 启动服务端,EnchantLib 会自动创建 `config/enchantlib/` 配置目录
 3. (可选)安装依赖 EnchantLib 的其他模组
 
@@ -64,8 +64,9 @@ loot_injection_enabled = true
 # 关闭后所有村民交易都不会被注入
 villager_trade_enabled = true
 
-# 资源分发总开关
-# 关闭后跳过目录扫描、语言合并、资源包构建、HTTP 服务器和推送
+# 资源分发总开关(仅控制服务端推送)
+# 关闭后跳过语言合并、资源包构建、HTTP 服务器和推送
+# 注意:客户端安装 EnchantLib 及附属后的本地资源注入不受此开关影响
 resource_distribution_enabled = true
 
 # HTTP 服务器端口(范围 1-65535)
@@ -96,7 +97,7 @@ entity_tick_interval = 20
 |--------|------|--------|------|
 | `loot_injection_enabled` | bool | `true` | 战利品注入总开关,关闭后所有战利品注入规则不注册 |
 | `villager_trade_enabled` | bool | `true` | 村民交易总开关,关闭后所有村民交易不注入 |
-| `resource_distribution_enabled` | bool | `true` | 资源分发总开关,关闭后跳过扫描/合并/构建/HTTP/推送 |
+| `resource_distribution_enabled` | bool | `true` | 资源分发总开关,**只控制服务端推送**(语言合并/资源包构建/HTTP/推送),关闭后客户端本地注入不受影响 |
 | `http_server_port` | int | `8765` | HTTP 服务器端口,范围 1-65535 |
 | `http_server_host` | string | `""` | 对外完整网址,可含端口;留空自动探测本机 IP(仅局域网可用,公网必须配置)。对外端口由此处 host 决定,不进 http_server_port |
 | `debug_enabled` | bool | `false` | 调试日志开关 |
@@ -438,7 +439,7 @@ EnchantLib 自带客户端资源包分发系统,用于推送附魔的本地化�
 
 ### 6.1 工作流程
 
-1. 服务端启动时扫描所有模组的 `assets/<modid>/enchant_sync/` 目录
+1. 服务端启动时扫描所有模组 `assets/` 目录下**任意命名空间**的 `enchant_sync/` 子目录(不限于模组 ID)
 2. 语言文件跨模组合并到 `assets/minecraft/lang/`;其他资源(纹理/粒子/声音等)保留模组命名空间
 3. 构建运行时资源包(ZIP),包含 `pack.mcmeta` + 语言文件 + 其他资源
 4. 启动内置 HTTP 服务器(默认端口 8765)
@@ -449,6 +450,7 @@ EnchantLib 自带客户端资源包分发系统,用于推送附魔的本地化�
 - 玩家加入时收到资源包推送提示
 - 接受后,自定义附魔显示正确的本地化名称
 - 拒绝或未接受时,显示附魔的 fallback 文本(兜底名称)
+- 自 1.1.0 起,玩家在客户端安装 EnchantLib 及附属模组后,无需服务器推送即可自动本地注入附魔翻译等资源(required 内存资源包 `enchantlib:client_sync`,自动启用,外部资源包可覆盖);此本地注入不受 `resource_distribution_enabled` 开关影响
 
 ### 6.3 关键配置 http_server_host(公网部署必读)
 

@@ -4,9 +4,9 @@
 
 > A pure-server-side custom enchantment library for Minecraft 26.2 (Fabric). It lets mod developers accomplish enchantment registration, exclusive sets, acquisition paths, event callbacks, and client-side resource distribution through a concise API — without hand-writing datapack, Mixin, or resource pack logic.
 
-- **Version**: `26.2-1.0.1`
+- **Version**: `26.2-1.1.0`
 - **Environment**: Minecraft 26.2 · Fabric Loader ≥ 0.19.3 · Fabric API · Java 25
-- **Side**: Pure server-side (no client install required; resources are pushed automatically by the built-in HTTP server)
+- **Side**: Pure server-side (no client install required; resources are pushed automatically by the built-in HTTP server; if EnchantLib and its companion mods are installed on the client, resources are injected locally with no server push needed)
 - **License**: MIT
 
 ---
@@ -27,7 +27,7 @@ Under the MC 26.2 native enchantment system, custom enchantments require writing
 | Trigger policy | Gate by attack charge and scale by level to balance survival server experience |
 | Entity categorization | `EntityCategory` marks players as undead/arthropod/illager/aquatic, so corresponding mobs won't attack |
 | Entity counter | `EntityCounter` namespace-isolated thread-safe counter, auto-cleaned on player offline |
-| Resource distribution | Auto-merges cross-mod language files, built-in HTTP server pushes the resource pack |
+| Resource distribution | `enchant_sync` supports any namespace; auto-merges cross-mod language files, built-in HTTP server pushes the resource pack; resources are injected locally when installed on the client |
 | Config-defined enchantments | Admins define enchantments via TOML config files, no code changes required |
 | Operations commands | `/enchantlib list / give / groups / dump / reload / debug` |
 
@@ -39,7 +39,7 @@ Under the MC 26.2 native enchantment system, custom enchantments require writing
 
 ### Player (server user)
 
-Place `enchantlib-26.2-1.0.1.jar` in the server's `mods/` directory. No client install is required; when players join, EnchantLib automatically pushes the localization resource pack (if the server has resource distribution enabled).
+Place `enchantlib-26.2-1.1.0.jar` in the server's `mods/` directory. No client install is required; when players join, EnchantLib automatically pushes the localization resource pack (if the server has resource distribution enabled). If players also install EnchantLib and its companion mods on the client, resources are injected locally with no server push needed.
 
 Dependencies: Minecraft 26.2, Fabric Loader, Fabric API.
 
@@ -49,7 +49,7 @@ Dependencies: Minecraft 26.2, Fabric Loader, Fabric API.
 
 ```gradle
 dependencies {
-    modImplementation "com.enchantlib:enchantlib:26.2-1.0.1"
+    modImplementation "com.enchantlib:enchantlib:26.2-1.1.0"
 }
 ```
 
@@ -169,7 +169,7 @@ http_server_host = "play.example.com"   # no port for 80/reverse proxy; use "pla
 
 > `http_server_port` (default 8765) is only the **local listen port** (server bind) and **does not appear in the external URL**. The external port is determined by `http_server_host`: omit the port when behind 80/reverse proxy; include it in the host for direct non-80 access (e.g., `play.example.com:8080`).
 
-If you don't need client localization (e.g., a pure survival server that doesn't show enchantment names), set `resource_distribution_enabled = false` to disable the entire resource distribution system.
+If you don't need server-side push (e.g., a pure survival server that doesn't show enchantment names), set `resource_distribution_enabled = false` to disable server-side resource distribution. Note: this switch only controls **server-side push** (language merging + pack building + HTTP); local resource injection after installing the mod on the client is not affected.
 
 ---
 
@@ -193,7 +193,7 @@ The example mod has been split into a separate repo (`enchantlib-examplemod`), i
 
 - Minecraft 26.2 native enchantment system (runtime datapack injection)
 - Fabric Loader + Fabric API
-- 10 Mixins (event bridging, entity categorization interception, runtime datapack injection)
+- 11 Mixins (event bridging, entity categorization interception, runtime datapack injection, client resource pack injection)
 - NightConfig TOML (config parsing)
 - Built-in HTTP server (resource pack distribution)
 
@@ -207,9 +207,9 @@ liluo23 · MIT License
 
 > 面向 Minecraft 26.2 (Fabric) 的纯服务端自定义附魔库。让模组开发者用一套简洁 API 完成附魔的注册、互斥组、获取途径、事件回调与客户端资源分发,无需手写数据包、Mixin 或资源包逻辑。
 
-- **版本**:`26.2-1.0.1`
+- **版本**:`26.2-1.1.0`
 - **环境**:Minecraft 26.2 · Fabric Loader ≥ 0.19.3 · Fabric API · Java 25
-- **运行侧**:纯服务端(客户端无需安装,资源由内置 HTTP 服务器自动推送)
+- **运行侧**:纯服务端(客户端无需安装,资源由内置 HTTP 服务器自动推送;客户端安装 EnchantLib 及附属后也可自动本地注入资源,无需服务器推送)
 - **许可证**:MIT
 
 ---
@@ -230,7 +230,7 @@ liluo23 · MIT License
 | 触发策略 | 按攻击充能门控与等级缩放,平衡生存服体验 |
 | 玩家分类 | `EntityCategory` 把玩家标记为亡灵/节肢/灾厄/水生,让对应怪物不攻击 |
 | 实体计数器 | `EntityCounter` 命名空间隔离的线程安全计数器,玩家离线自动清理 |
-| 资源分发 | 自动合并跨模组语言文件,内置 HTTP 服务器推送资源包 |
+| 资源分发 | `enchant_sync` 支持任意命名空间;自动合并跨模组语言文件,内置 HTTP 服务器推送资源包;客户端安装后自动本地注入资源 |
 | 配置定义附魔 | 管理员通过 TOML 配置文件定义附魔,无需改代码 |
 | 运维指令 | `/enchantlib list / give / groups / dump / reload / debug` |
 
@@ -242,7 +242,7 @@ liluo23 · MIT License
 
 ### 玩家(服务端使用者)
 
-把 `enchantlib-26.2-1.0.1.jar` 放入服务端 `mods/` 目录。客户端无需安装,玩家加入时 EnchantLib 会自动推送本地化资源包(如服务器开启了资源分发)。
+把 `enchantlib-26.2-1.1.0.jar` 放入服务端 `mods/` 目录。客户端无需安装,玩家加入时 EnchantLib 会自动推送本地化资源包(如服务器开启了资源分发);若玩家在客户端也安装了 EnchantLib 及附属模组,则无需服务器推送即可自动本地注入资源。
 
 依赖:Minecraft 26.2、Fabric Loader、Fabric API。
 
@@ -252,7 +252,7 @@ liluo23 · MIT License
 
 ```gradle
 dependencies {
-    modImplementation "com.enchantlib:enchantlib:26.2-1.0.1"
+    modImplementation "com.enchantlib:enchantlib:26.2-1.1.0"
 }
 ```
 
@@ -372,7 +372,7 @@ http_server_host = "play.example.com"   # 走 80/反代不带端口；直连非 
 
 > `http_server_port`(默认 8765)只是**本地监听端口**(服务端绑定用),**不进对外 URL**。对外端口由 `http_server_host` 决定:走 80/反代时 host 不带端口;直连非 80 端口时把端口写在 host 里(如 `play.example.com:8080`)。
 
-若不需要客户端本地化(例如纯生存服不显示附魔名),可设 `resource_distribution_enabled = false` 关闭整个资源分发系统。
+若不需要服务端推送(例如纯生存服不显示附魔名),可设 `resource_distribution_enabled = false` 关闭服务端资源分发。注意:该开关只控制**服务端推送**(语言合并 + 资源包构建 + HTTP),客户端安装 mod 后的本地资源注入不受影响。
 
 ---
 
@@ -396,7 +396,7 @@ http_server_host = "play.example.com"   # 走 80/反代不带端口；直连非 
 
 - Minecraft 26.2 原生附魔系统(运行时数据包注入)
 - Fabric Loader + Fabric API
-- 10 个 Mixin(事件桥接、玩家分类拦截、运行时数据包注入)
+- 11 个 Mixin(事件桥接、玩家分类拦截、运行时数据包注入、客户端资源包注入)
 - NightConfig TOML(配置解析)
 - 内置 HTTP 服务器(资源包分发)
 

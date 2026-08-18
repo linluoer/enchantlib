@@ -18,7 +18,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * 内存数据包资源实现，从内存中的 Map 提供资源内容。
  *
- * <p>用于在运行时注入附魔定义等数据包内容，无需写入磁盘文件。</p>
+ * <p>用于在运行时注入附魔定义等数据包内容（SERVER_DATA）或
+ * enchant_sync 客户端资源（CLIENT_RESOURCES），无需写入磁盘文件。</p>
  *
  * @since 0.1.0
  */
@@ -67,7 +68,9 @@ public class InMemoryPackResources implements PackResources {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> @Nullable T getMetadataSection(MetadataSectionType<T> type) throws IOException {
-		if (type == PackMetadataSection.SERVER_TYPE || type == PackMetadataSection.FALLBACK_TYPE) {
+		if (type == PackMetadataSection.SERVER_TYPE
+			|| type == PackMetadataSection.CLIENT_TYPE
+			|| type == PackMetadataSection.FALLBACK_TYPE) {
 			return (T) this.metadata;
 		}
 		return null;
